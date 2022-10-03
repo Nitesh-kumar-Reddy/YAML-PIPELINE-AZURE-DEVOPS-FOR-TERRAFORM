@@ -1,0 +1,60 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: CI
+    jobs:
+      - job: terraform 
+        steps: 
+          # - script: dir /s /b /o:gn
+          # - task: PublishPipelineArtifact@1
+          #   inputs:
+          #     targetPath: '$(System.DefaultWorkingDirectory)'
+          #     publishLocation: 'pipeline'
+          #     artifact: 'Terraform'
+          
+          - task: TerraformInstaller@0
+            inputs:
+              terraformVersion: 'latest'
+          - task: TerraformTaskV2@2
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/RG'
+              backendServiceArm: 'spn-azure-ado-nitesh'
+              backendAzureRmResourceGroupName: 'Terraform-RG'
+              backendAzureRmStorageAccountName: 'terraformrg12r'
+              backendAzureRmContainerName: 'blob'
+              backendAzureRmKey: '$(stgkey)'
+          - bash: ls -R
+          - task: TerraformTaskV2@2
+            inputs:
+              provider: 'azurerm'
+              command: 'plan'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/RG'
+              # commandOptions: '-out=tfplan -lock=false'
+              environmentServiceNameAzureRM: 'spn-azure-ado-nitesh'
+          - task: TerraformTaskV2@2
+            inputs:
+              provider: 'azurerm'
+              command: 'apply'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/RG'
+              environmentServiceNameAzureRM: 'spn-azure-ado-nitesh'
+          - task: TerraformTaskV2@2
+            inputs:
+              provider: 'azurerm'
+              command: 'destroy'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/RG'
+              environmentServiceNameAzureRM: 'spn-azure-ado-nitesh'
+
+              
+                  
+          
